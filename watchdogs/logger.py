@@ -37,7 +37,7 @@ class directory_watcher:
 
         # create observer
         self.observer = Observer()
-        self.observer.schedule(self.event_handler, path=self.dir_path,
+        self.observer.schedule(self.event_handler,  path=self.dir_path,
                                recursive=True)
         # start
         self.observer.start()
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     log_flpth = sys.argv[2]
     assert(os.path.isdir(path)), 'path provided is not a directory'
     log_watchdog = directory_watcher(path=path,
-                                     log_flpath='dir.log')
+                                     log_flpath=log_flpth)
     log_watchdog.activate()
 
     # set stop condition
