@@ -5,5 +5,5 @@ RGF is the COVID-19 national genomic surveillance of Fundação Oswaldo Cruz (FI
 
 ---
 
-Our top priority now is to solve the specific problems of RGF. However, our long term goal is to develop an open plataform an open platform for general genomic surveillance infrastructure implementation.
+Our top priority now is to solve the specific problems of RGF. However, our long term goal is to develop an open platform for general genomic surveillance infrastructure implementation.
 Hopefully, other research and public health organization worldwide could use and/or adapt to build their solutions.
