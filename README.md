@@ -11,6 +11,6 @@ Hopefully, other research and public health organization worldwide could use and
 ## Features for Module 1 v0.1
 
 - [ ] submit jobs to cluster queue routine
-- [ ] automatically register new runs on MongoDB
+- [x] automatically register new runs on MongoDB
 - [ ] automatically register new samples on MongoDB
-- [ ] method to register new genome providers on MongoDB
+- [x] method to register new genome providers on MongoDB

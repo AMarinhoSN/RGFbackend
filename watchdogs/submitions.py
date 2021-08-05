@@ -2,8 +2,10 @@ from watchdog.events import PatternMatchingEventHandler
 import watchdog.observers
 import time
 import os
+from datetime import datetime
+# database interface
+import dbInterface.mongoInterface
 # === FUNCTIONS ================================================================
-
 
 def process_submit_fl(flpath):
     '''
@@ -14,16 +16,21 @@ def process_submit_fl(flpath):
     routine = 'standard'
     reads_lenght = 150
 
+    # dd/mm/YY
+    now = datetime.now()
+
+    # dd/mm/YY H:M:S
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     for line in f:
         if line.startswith('routine'):
             routine = line.split('=')[-1].replace('\n', '')
         if line.startswith('reads_length'):
             reads_lenght = line.split('=')[-1].replace('\n', '')
-    dct = {'routine': routine, 'reads_lenght': reads_lenght}
+    dct = {'routine': routine, 'reads_lenght': reads_lenght,
+            'submition_date':dt_string}
     return dct
 
 # TODO get metadata [user name, run code, routine
-
 
 def get_metadata_from_path(path):
     '''
@@ -60,12 +67,20 @@ def get_fastq_metadata(fastq_file):
 
 
 class Handler(PatternMatchingEventHandler):
-    def __init__(self):
+    '''
+    TO DO add description
+    '''
+    def __init__(self, cred_flpath, database_name):
+        '''
+        '''
         # Set the patterns for PatternMatchingEventHandler
         PatternMatchingEventHandler.__init__(self,
                                              patterns=['submit.txt'],
                                              ignore_directories=True,
                                              case_sensitive=True)
+        # credential file
+        self.cred_flpath = cred_flpath
+        self.database_name = database_name
 
     def on_created(self, event):
         # Event is created
@@ -89,13 +104,23 @@ class Handler(PatternMatchingEventHandler):
         # mount documents
         run_dct = {**metadata_dct, **submit_dct}
         run_dct['files_at_dir'] = files_dir
-        print(" -- RUN DOCUMENT --")
-        print(run_dct)
-        print(' -- SAMPLE DOCUMENTS --')
-        print(samples_lst)
-        # [TODO] feed MONGO DB
+        run_dct['fastq_at_dir'] = fastq_lst
+        # feed MONGO DB
+
+        # connect to database
+        # TODO - handle failed connection
+        DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
+                                               database_name=self.database_name)
+
         # feed run collection
+        print("  > Adding new sequencing batch document")
+        DBclient.insert_new_seqBatch(run_dct)
+
         # feed sample collection
+        # TODO - compliance test
+        # TODO - implement feeding database
+
+        # [TODO] status notification system
 
     def on_modified(self, event):
         print("Watchdog received modified event - % s." % event.src_path)
@@ -105,8 +130,10 @@ class Handler(PatternMatchingEventHandler):
 if __name__ == "__main__":
     #src_path = r"test_dir/users/"
     #src_path = r"/HDD/server/chagas/raw_data/"
-    src_path = r"/HDD/Projects/RGFbackend/test_box/"
-    event_handler = Handler()
+    cred_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
+    src_path = r"/HDD/Projects/git_stuff/RGFbackend/test_dir/"
+    dbName = 'rgf_db'
+    event_handler = Handler(cred_flpath, dbName)
     observer = watchdog.observers.Observer()
     observer.schedule(event_handler, path=src_path, recursive=True)
     observer.start()
@@ -115,5 +142,4 @@ if __name__ == "__main__":
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
-    observer.join()
     observer.join()

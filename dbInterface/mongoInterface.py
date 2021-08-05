@@ -102,8 +102,31 @@ class DataBase:
 
 
     # TODO
-    def insert_new_seqBatch(self):
-        pass
+    def insert_new_seqBatch(self, new_seq_batch_dct):
+        #  --- | assert document structure compliance | ------------------------
+        # check keys
+        try:
+            assert(docstr.assertSeqBatchKeysCompliance(new_seq_batch_dct))
+        except(AssertionError):
+            missing_keys= docstr.assertSeqBatchKeysCompliance(new_seq_batch_dct)
+            print('ERROR: The following keys are missing...')
+            for k in missing_keys:
+                print('       ', k)
+            raise Exception('Missing keys for Genome Provider doc')
+
+        # check values types
+        try:
+            assert(docstr.assertSeqBatchTypeCompliance(new_seq_batch_dct))
+        except(AssertionError):
+            failed_types = docstr.assertGenPrvdrTypeCompliance(new_seq_batch_dct)
+            print('ERROR: The following values have the wrong type...')
+            for k in failed_types:
+                    print('       ', k)
+            raise Exception('Wrong value format for Genome Provider doc')
+
+        # --- | add new document | ---------------------------------------------
+        # add document to genome provider
+        self.seqBatchsCol.insert_one(new_seq_batch_dct)
 
     # TODO
     def insert_new_gnmSample(self):
