@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+import dbInterface.mongoInterface
+import argparse
+
+dsc = '''
+This script is designed to manage genome providers collections of Rede Genomica
+Fiocruz.
+'''
+
+cred_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
+new_prvdr_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/new_provider.txt'
+
+# ---- INPUT -------------------------------------------------------------------
+parser = argparse.ArgumentParser(description=dsc)
+parser.add_argument('dbcred_flpath', type=str,
+                    help='path to Mongo DB credentials')
+
+parser.add_argument('-add', type=bool, default=True)
+parser.add_argument('new_prvdr_flpath', type=str,
+                help='path to new provider data')
+
+parser.add_argument('-targetdb_name', type=str, default='targetdb',
+            help='target database name')
+
+args = parser.parse_args()
+
+print('| --------------------------------------------------------------------|')
+print('|                        >> RGF Manage Genome Provider <<')
+print('|                                RGF backend')
+print('|                    made by Aggeu Magalhães Research Institute')
+print('|                               FIOCRUZ - Pernambuco')
+print('| --------------------------------------------------------------------|')
+print('| ')
+print('| This script is designed to manage genome providers collections of ')
+print('| Rede Genomica Fiocruz.')
+print('| ')
+print('| --------------------------------------------------------------------|')
+print('| Written by:')
+print('|    PhD. Antonio Marinho da Silva Neto (antonio.marinho@fiocruz.br')
+print('| More information at: ')
+print('|    https://github.com/AMarinhoSN/RGFbackend')
+print('| --------------------------------------------------------------------|')
+# log into database
+print("@ logging into database...")
+DBclient = dbInterface.mongoInterface.DataBase(cred_flpath,
+                                               database_name='rgf_db')
+print("  > databases available: ")
+print('  ',DBclient.client.list_database_names())
+
+# add new provider register
+if args.add == True:
+    print("@ adding new genome provider")
+    DBclient.insert_new_gnmProvider(new_prvdr_flpath)
+    # TODO check if new document was added
+    #DBclient.DB.genomeProviders.find({'code':'IAM'}).count()
+print(":: DONE ::")
