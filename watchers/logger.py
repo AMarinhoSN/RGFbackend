@@ -66,4 +66,4 @@ if __name__ == "__main__":
             time.sleep(1)
     except KeyboardInterrupt:
         log_watchdog.deactivate()
-    print(" WATCHDOG WAS MURDERED... by a keyboard interruption.")
+        print(" WATCHDOG WAS MURDERED... by a keyboard interruption.")
