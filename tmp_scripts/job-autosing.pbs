@@ -1,0 +1,52 @@
+#!/bin/sh
+
+#PBS -N job-autosing
+#PBS -e job-autosing.err
+#PBS -o job-autosing.log
+#PBS -q workq
+#PBS -l place=scatter
+#PBS -l select=3:ncpus=96:mpiprocs=96
+
+CORES=$[ `cat $PBS_NODEFILE | wc -l` ]
+NODES=$[ `uniq $PBS_NODEFILE | wc -l` ]
+
+cd $PBS_O_WORKDIR
+
+printf "################################################\n";
+printf "Current time is: `date`\n";
+printf "Current PBS work directory is: $PBS_O_WORKDIR\n";
+printf "Current PBS queue is: $PBS_O_QUEUE\n";
+printf "Current PBS job ID is: $PBS_JOBID\n";
+printf "Current PBS job name is: $PBS_JOBNAME\n";
+printf "PBS stdout log is: $PBS_O_WORKDIR/job-sing.err\n";
+printf "PBS stderr log is: $PBS_O_WORKDIR/job-sing.log\n";
+
+TBEGIN=`echo "print time();" | perl`
+printf "################################################\n";
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/sw/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/sw/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/sw/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/sw/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+conda activate singularity_04_2021
+
+#conda env list >> log.txt
+#conda --help >> log.txt
+#singularity --help >> log.txt
+
+bash auto_singularity.sh autofile.txt
+
+TEND=`echo "print time();" | perl`
+printf "+++ Job finished: `date`\n";
+printf "+++ Job walltime: `expr $TEND - $TBEGIN`\n";
+printf "#################################################\n";
