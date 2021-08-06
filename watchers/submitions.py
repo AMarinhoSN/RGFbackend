@@ -3,9 +3,11 @@ import watchdog.observers
 import time
 import os
 from datetime import datetime
+import sys
 # database interface
 import dbInterface.mongoInterface
 # === FUNCTIONS ================================================================
+
 
 def process_submit_fl(flpath):
     '''
@@ -27,10 +29,11 @@ def process_submit_fl(flpath):
         if line.startswith('reads_length'):
             reads_lenght = line.split('=')[-1].replace('\n', '')
     dct = {'routine': routine, 'reads_lenght': reads_lenght,
-            'submition_date':dt_string}
+           'submition_date': dt_string}
     return dct
 
 # TODO get metadata [user name, run code, routine
+
 
 def get_metadata_from_path(path):
     '''
@@ -70,6 +73,7 @@ class Handler(PatternMatchingEventHandler):
     '''
     TO DO add description
     '''
+
     def __init__(self, cred_flpath, database_name):
         '''
         '''
@@ -110,7 +114,7 @@ class Handler(PatternMatchingEventHandler):
         # connect to database
         # TODO - handle failed connection
         DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
-                                               database_name=self.database_name)
+                                                       database_name=self.database_name)
 
         # feed run collection
         print("  > Adding new sequencing batch document")
@@ -127,19 +131,54 @@ class Handler(PatternMatchingEventHandler):
         # Event is modified, you can process it now
 
 
+class subm_watcher:
+    '''
+    '''
+
+    def __init__(self, cred_flpath, src_path, db_name):
+        '''
+        '''
+        self.cred_flpath = cred_flpath
+        self.dir_path = src_path
+        self.db_name = db_name
+
+    def activate(self):
+        '''
+        activate submition watcher
+        '''
+        # create event handler
+        event_handler = Handler(self.cred_flpath, self.db_name)
+        # create observer and add event handler routines
+        self.observer = watchdog.observers.Observer()
+        self.observer.schedule(event_handler, path=self.dir_path,
+                               recursive=True)
+        # activate observer
+        self.observer.start()
+
+    def deactivate(self):
+        '''
+        stop submition watcher
+        '''
+        self.observer.stop()
+        self.observer.join()
+
+
 if __name__ == "__main__":
     #src_path = r"test_dir/users/"
     #src_path = r"/HDD/server/chagas/raw_data/"
-    cred_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
-    src_path = r"/HDD/Projects/git_stuff/RGFbackend/test_dir/"
-    dbName = 'rgf_db'
-    event_handler = Handler(cred_flpath, dbName)
-    observer = watchdog.observers.Observer()
-    observer.schedule(event_handler, path=src_path, recursive=True)
-    observer.start()
+    #cred_flpath = '/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
+    #src_path = r"/HDD/Projects/git_stuff/RGFbackend/test_dir/"
+    #dbName = 'rgf_db'
+    #cred_flpath = '/home/marinho/Projects/mongo/db_credentials'
+    #src_path = '/HDD/Projects/RGFbackend/test_box/'
+    #dbName = 'rgf_db'
+    cred_flpath = sys.argv[1]
+    src_path = sys.argv[2]
+    dbName = sys.argv[3]
+    watcher = subm_watcher(cred_flpath, src_path, dbName)
+    watcher.activate()
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        watcher.deactivate()
