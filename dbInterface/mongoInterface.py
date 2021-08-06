@@ -3,6 +3,8 @@ from pymongo import MongoClient
 import dbInterface.documentStructures as docstr
 
 # ==== FUNCTIONS ===============================================================
+
+
 def read_keyval_file(cred_flpath):
     '''
     Read key values text file
@@ -13,10 +15,10 @@ def read_keyval_file(cred_flpath):
         data = line.split('=')
         if len(data) == 2:
             key = data[0].replace(' ', '')
-            value = data[1].replace(' ','').replace('\n','')
+            value = data[1].replace(' ', '').replace('\n', '')
             dct[key] = value
         # if line cannot be splited into two substrings using '=', ignore it
-        if len(data)== 1:
+        if len(data) == 1:
             continue
         if len(data) > 2:
             raise Exception("More than one '=' symbol at keyvalue line")
@@ -26,10 +28,12 @@ def read_keyval_file(cred_flpath):
 
 #cred_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
 
+
 class DataBase:
     '''
     class designed to handle routine of mongo database operations
     '''
+
     def __init__(self, cred_flpath, database_name):
         '''
         create a mondoDB class object.
@@ -60,11 +64,11 @@ class DataBase:
         # create database
         self.DB = self.client[self.database_name]
         # create collections for genome providers
-        self.gnmPrvdrsCol =self.DB['genomeProviders']
+        self.gnmPrvdrsCol = self.DB['genomeProviders']
         # create collections genome samples data
-        self.gnmDataCol =self.DB['genomeData']
+        self.gnmDataCol = self.DB['genomeData']
         # create collections sequencing run batchs
-        self.seqBatchsCol =self.DB['seqBatchs']
+        self.seqBatchsCol = self.DB['seqBatchs']
         # WARNING: collections and databases are created only after adding an
         # actual document
 
@@ -80,7 +84,8 @@ class DataBase:
         try:
             assert(docstr.assertGenPrvdrKeysCompliance(new_provider_dct))
         except(AssertionError):
-            missing_keys = docstr.assertGenPrvdrKeysCompliance(new_provider_dct)
+            missing_keys = docstr.assertGenPrvdrKeysCompliance(
+                new_provider_dct)
             print('ERROR: The following keys are missing...')
             for k in missing_keys:
                 print('       ', k)
@@ -90,25 +95,27 @@ class DataBase:
         try:
             assert(docstr.assertGenPrvdrTypeCompliance(new_provider_dct))
         except(AssertionError):
-            failed_types = docstr.assertGenPrvdrTypeCompliance(new_provider_dct)
+            failed_types = docstr.assertGenPrvdrTypeCompliance(
+                new_provider_dct)
             print('ERROR: The following values have the wrong type...')
             for k in failed_types:
-                    print('       ', k)
+                print('       ', k)
             raise Exception('Wrong value format for Genome Provider doc')
 
         # --- | add new document | ---------------------------------------------
         # add document to genome provider
         self.gnmPrvdrsCol.insert_one(new_provider_dct)
 
-
     # TODO
+
     def insert_new_seqBatch(self, new_seq_batch_dct):
         #  --- | assert document structure compliance | ------------------------
         # check keys
         try:
             assert(docstr.assertSeqBatchKeysCompliance(new_seq_batch_dct))
         except(AssertionError):
-            missing_keys= docstr.assertSeqBatchKeysCompliance(new_seq_batch_dct)
+            missing_keys = docstr.assertSeqBatchKeysCompliance(
+                new_seq_batch_dct)
             print('ERROR: The following keys are missing...')
             for k in missing_keys:
                 print('       ', k)
@@ -118,14 +125,15 @@ class DataBase:
         try:
             assert(docstr.assertSeqBatchTypeCompliance(new_seq_batch_dct))
         except(AssertionError):
-            failed_types = docstr.assertGenPrvdrTypeCompliance(new_seq_batch_dct)
+            failed_types = docstr.assertGenPrvdrTypeCompliance(
+                new_seq_batch_dct)
             print('ERROR: The following values have the wrong type...')
             for k in failed_types:
-                    print('       ', k)
+                print('       ', k)
             raise Exception('Wrong value format for Genome Provider doc')
 
         # --- | add new document | ---------------------------------------------
-        # add document to genome provider
+        # add document to sequencing Batchs collection
         self.seqBatchsCol.insert_one(new_seq_batch_dct)
 
     # TODO

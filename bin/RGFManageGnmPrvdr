@@ -7,22 +7,22 @@ This script is designed to manage genome providers collections of Rede Genomica
 Fiocruz.
 '''
 
-cred_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
-new_prvdr_flpath='/HDD/Projects/module_2_dev/tutorials/mongo_sing/new_provider.txt'
-
 # ---- INPUT -------------------------------------------------------------------
 parser = argparse.ArgumentParser(description=dsc)
 parser.add_argument('dbcred_flpath', type=str,
                     help='path to Mongo DB credentials')
 
-parser.add_argument('-add', type=bool, default=True)
+parser.add_argument('-db_name', type=str, default='rgf_db',
+                    help='target database name')
 parser.add_argument('new_prvdr_flpath', type=str,
-                help='path to new provider data')
+                    help='path to new provider data')
 
-parser.add_argument('-targetdb_name', type=str, default='targetdb',
-            help='target database name')
+parser.add_argument('-add', type=bool, default=True)
 
 args = parser.parse_args()
+cred_flpath = args.dbcred_flpath
+db_name = args.db_name
+new_prvdr_flpath = args.new_prvdr_flpath
 
 print('| --------------------------------------------------------------------|')
 print('|                        >> RGF Manage Genome Provider <<')
@@ -43,9 +43,9 @@ print('| --------------------------------------------------------------------|')
 # log into database
 print("@ logging into database...")
 DBclient = dbInterface.mongoInterface.DataBase(cred_flpath,
-                                               database_name='rgf_db')
+                                               database_name=db_name)
 print("  > databases available: ")
-print('  ',DBclient.client.list_database_names())
+print('  ', DBclient.client.list_database_names())
 
 # add new provider register
 if args.add == True:
