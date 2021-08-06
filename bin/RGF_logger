@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+from watchers import logger
+import argparse
+import os
+import time
+dsc = '''
+This script activate the logger routine. This will monitor changes in a given
+dir and write it on a file
+'''
+
+# ---- INPUT -------------------------------------------------------------------
+parser = argparse.ArgumentParser(description=dsc)
+parser.add_argument('dir_path', type=str, help='path of directory to monitor')
+parser.add_argument('log_flpth', type=str, help='path to log file ')
+
+args = parser.parse_args()
+
+print('| --------------------------------------------------------------------|')
+print('|                            >> RGF logger <<')
+print('|                             RGF backend v0.0')
+print('|                    made by Aggeu Magalhães Research Institute')
+print('|                             FIOCRUZ - Pernambuco')
+print('| --------------------------------------------------------------------|')
+print('| ')
+print('| This script starts the logger watchdog. This logger will register ')
+print('| every single change that happens inside a directory and write it on a')
+print('| a file.')
+print('| ')
+print('| --------------------------------------------------------------------|')
+print('| Written by:')
+print('|    PhD. Antonio Marinho da Silva Neto (antonio.marinho@fiocruz.br')
+print('| More information at: ')
+print('|    https://github.com/AMarinhoSN/RGFbackend')
+print('| --------------------------------------------------------------------|')
+# log into database
+print("@ starting logger...")
+path = args.dir_path
+log_flpth = args.log_flpth
+
+assert(os.path.isdir(path)), 'path provided is not a directory'
+log_watchdog = logger.directory_watcher(path=path, log_flpath=log_flpth)
+log_watchdog.activate()
+
+# set stop condition
+try:
+    print('  : logger active')
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    log_watchdog.deactivate()
+    print(" WATCHDOG WAS MURDERED... by a keyboard interruption.")

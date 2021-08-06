@@ -8,13 +8,13 @@ setup(name='RGFbackend',
     url='http://github.com/AMarinhoSN/RGFbackend',
     author='Antonio Marinho da Silva Neto',
     author_email='antonio.marinho@fiocruz.br',
-    packages=['dbInterface', 'watchdogs'],
+    packages=['dbInterface', 'watchers'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3.8',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
-    scripts=['bin/RGFManageGnmPrvdr'],
-    install_requires=['pymongo'],
+    scripts=['bin/RGFManageGnmPrvdr', 'bin/RGF_logger'],
+    install_requires=['pymongo', 'watchdog'],
     zip_safe=False)
