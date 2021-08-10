@@ -114,16 +114,13 @@ class Handler(PatternMatchingEventHandler):
         # connect to database
         # TODO - handle failed connection
         DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
-                                                       database_name=self.database_name)
+                                             database_name=self.database_name)
 
         # feed run collection
         print("  > Adding new sequencing batch document")
         DBclient.insert_new_seqBatch(run_dct)
 
         # feed sample collection
-        # TODO - compliance test
-        # TODO - implement feeding database
-
         # [TODO] status notification system
 
     def on_modified(self, event):
@@ -133,6 +130,8 @@ class Handler(PatternMatchingEventHandler):
 
 class subm_watcher:
     '''
+    TO DO add description
+
     '''
 
     def __init__(self, cred_flpath, src_path, db_name):
@@ -144,7 +143,7 @@ class subm_watcher:
 
     def activate(self):
         '''
-        activate submition watcher
+        activate submissions watcher
         '''
         # create event handler
         event_handler = Handler(self.cred_flpath, self.db_name)
@@ -157,21 +156,13 @@ class subm_watcher:
 
     def deactivate(self):
         '''
-        stop submition watcher
+        stop submissions watcher
         '''
         self.observer.stop()
         self.observer.join()
 
 
 if __name__ == "__main__":
-    #src_path = r"test_dir/users/"
-    #src_path = r"/HDD/server/chagas/raw_data/"
-    #cred_flpath = '/HDD/Projects/module_2_dev/tutorials/mongo_sing/mongo_credentials'
-    #src_path = r"/HDD/Projects/git_stuff/RGFbackend/test_dir/"
-    #dbName = 'rgf_db'
-    #cred_flpath = '/home/marinho/Projects/mongo/db_credentials'
-    #src_path = '/HDD/Projects/RGFbackend/test_box/'
-    #dbName = 'rgf_db'
     cred_flpath = sys.argv[1]
     src_path = sys.argv[2]
     dbName = sys.argv[3]
