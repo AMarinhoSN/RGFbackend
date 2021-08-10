@@ -20,5 +20,8 @@ Hopefully, other research and public health organization worldwide could use and
 
 - [ ] submit jobs to cluster queue routine
 - [x] automatically register new runs on MongoDB
+- [x] apps to start logger routine via CLI
+- [x] apps to manage genome provider collection via CLI
+- [x] apps to start submission watcher routine via CLI
 - [ ] automatically register new samples on MongoDB
 - [x] method to register new genome providers on MongoDB
