@@ -15,6 +15,6 @@ setup(name='RGFbackend',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
-    scripts=['bin/RGFManageGnmPrvdr', 'bin/RGF_logger'],
+    scripts=['bin/RGFManageGnmPrvdr', 'bin/RGF_logger', 'bin/RGF_sbmtWatcher'],
     install_requires=['pymongo', 'watchdog'],
     zip_safe=False)
