@@ -1,4 +1,5 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
+
 #
 import dbInterface.documentStructures as docstr
 
@@ -34,7 +35,7 @@ class DataBase:
     class designed to handle routine of mongo database operations
     '''
 
-    def __init__(self, cred_flpath, database_name):
+    def __init__(self, cred_flpath, database_name, timeout_upto=2000):
         '''
         create a mondoDB class object.
 
@@ -49,6 +50,8 @@ class DataBase:
             Path for credentials file
         database_name : str
             Name of the database to be used/created.
+        timeout_upto: int
+            Max time to wait for server connection in ms (default = 2000)
 
         Returns
         -------
@@ -60,7 +63,22 @@ class DataBase:
         self.cred_flpath = cred_flpath
         # load credentials file
         kwargs = read_keyval_file(cred_flpath)
-        self.client = MongoClient(**kwargs)
+        try:
+            self.client = MongoClient(**kwargs,
+                                    serverSelectionTimeoutMS = timeout_upto)
+            # check if server is valid
+            self.client.server_info()
+        except(errors.ServerSelectionTimeoutError):
+            print("ERROR: Connection timeout (waited for ",timeout_upto, ' ms)')
+            print("       Either your server is not up or you have a slow ")
+            print("       connection (if so, try to increase max timeout).")
+            raise Exception(" Connection timeout error.")
+
+        #try:
+        #except:
+        #    print("ERROR: invalid database server. Check if the server is up")
+        #    print("       and/or the credentials are valid")
+        #    exit()
         # create database
         self.DB = self.client[self.database_name]
         # create collections for genome providers
