@@ -67,7 +67,6 @@ Currently, the routine of submit new sequencing batchs to be processed is trigge
 ---
 
 ## Features for Module 1 v0.1
-
 - [ ] submit jobs to cluster queue routine
 - [x] automatically register new runs on MongoDB
 - [x] apps to start logger routine via CLI
@@ -75,3 +74,4 @@ Currently, the routine of submit new sequencing batchs to be processed is trigge
 - [x] apps to start submission watcher routine via CLI
 - [ ] automatically register new samples on MongoDB
 - [x] method to register new genome providers on MongoDB
+- [ ] backup routine
