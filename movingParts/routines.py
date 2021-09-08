@@ -145,6 +145,30 @@ def get_args_command_line(routine, sample, reference_genome, num_threads,
 
     return cmd_lst
 
+# queue files
+
+def write_subfl(template_flpth, new_flpath, bash_line):
+    '''
+    write a new queue submition file for a sample processing based on a template
+    provided.
+    A command line file will be added bellow any line starting with
+    "#>add_bash_here<"
+
+    Parameters
+    ----------
+    template_flpth:<path>
+        file path of a template file
+    '''
+    # [TO DO] Sanity checks
+
+    # Copy lines from template file and add specific command line to new
+    # submition file
+    with open(template_flpth,'r') as temp:
+        new_fl = open(new_flpath, 'w')
+        for line in temp:
+            new_fl.write(line)
+            if line.startswith('#>add_bash_here<'):
+                new_fl.write(bash_line+'\n')
 
 class sample:
     '''
@@ -172,6 +196,11 @@ class sample:
         '''
         submit
         '''
+        # [TO DO] sanity checks
+        # [TO DO] get bash line to add
+        # [TO DO] write submition file
+        write_subfl(template_flpth,new_flpath,bash_line)
+        # [TO DO] submit to queue according to engine
         pass
 
 
@@ -195,11 +224,10 @@ class gnmAssembly:
         self.routine_name = self.metadata['routine_name']
         self.bash_path = self.paths['bash_path']
 
-
-
     def submit_to_queue(self, sample_dct, engine='pbs'):
         '''
         '''
+        #[TO DO]
         # for each fastq, do:
             # create output directory
             # create submition file
@@ -279,13 +307,35 @@ class gnmAssembly:
             process = subprocess.run(' '.join(cmd_lst), shell=True,check=True)
             # [TO DO] check output files
             # [TO DO] move output files
-
+        # [TO DO]
         #if queue == True:
         # PBS
         # get template for PBS
         # monitor output files generation and create a log/report
         # Slurm
 
+
+class seqBatch:
+    '''
+    '''
+    def __init__(self, run_code, gprvdr_code, full_path, reads_lenght,
+                submition_date):
+        self.run_code = run_code
+        self.gprvdr_code = gprvdr_code
+        self.full_path = full_path
+        self.reads_lenght = reads_lenght
+        self.submition_date =submition_date
+        # get list of sample code and fastq pairs
+        files_dir = os.listdir('/'.join(event.src_path.split('/')[0:-1]))
+        fastq_lst = [x for x in files_dir if x.endswith('fastq.gz')]
+        # dct = {sample_code: 'xxx', fastq_files:'xxx'}
+
+    def call_gnm_assembly_routine(self, routine_dct):
+        # call
+        # load files from parameters and prepare submition files
+
+        # submit all sequences to queue
+        pass
 
 # test
 rtn_path = "/HDD/Projects/git_stuff/RGFbackend/test_dir/routines/iam_sarscov2.rtn"
