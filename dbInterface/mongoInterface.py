@@ -1,6 +1,6 @@
 from pymongo import MongoClient, errors
 
-#
+# import document structures
 import dbInterface.documentStructures as docstr
 
 # ==== FUNCTIONS ===============================================================
@@ -127,6 +127,9 @@ class DataBase:
     # TODO
 
     def insert_new_seqBatch(self, new_seq_batch_dct):
+        '''
+        Insert a new document at seqBatchs collection
+        '''
         #  --- | assert document structure compliance | ------------------------
         # check keys
         try:

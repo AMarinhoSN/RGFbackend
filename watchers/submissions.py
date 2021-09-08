@@ -89,7 +89,7 @@ class Handler(PatternMatchingEventHandler):
     def on_created(self, event):
         # Event is created
         print("Watchdog received created event - % s." % event.src_path)
-
+        # --- LOAD DOCUMENTS CONTENT -------------------------------------------
         # get run code and genome provider code
         metadata_dct = get_metadata_from_path(event.src_path)
 
@@ -109,8 +109,8 @@ class Handler(PatternMatchingEventHandler):
         run_dct = {**metadata_dct, **submit_dct}
         run_dct['files_at_dir'] = files_dir
         run_dct['fastq_at_dir'] = fastq_lst
-        # feed MONGO DB
 
+        # --- FEED MONGO DB ----------------------------------------------------
         # connect to database
         # TODO - handle failed connection
         DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
@@ -120,6 +120,10 @@ class Handler(PatternMatchingEventHandler):
         print("  > Adding new sequencing batch document")
         DBclient.insert_new_seqBatch(run_dct)
 
+        # --- START ANALISES ROUTINE -------------------------------------------
+        #
+        # [to do] create sequence batch object
+        # submit jobs to
         # feed sample collection
         # [TODO] status notification system
 
