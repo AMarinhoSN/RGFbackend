@@ -1,10 +1,15 @@
+from pathlib import Path
+import subprocess
+import os
 # parser for rtn files
 REQUIRED_DCTS = ['metadata', 'paths', 'input_names', 'default_params',
-                'dependencies']
+                 'dependencies']
 
 # --- FUNCTIONS ----------------------------------------------------------------
 #
-# RTN FILES
+# RTN FILES --------------------------------------------------------------------
+
+
 def catalog_missing_keys(rtn_flpth):
     '''
     check if required keys are present at an rtn_flpth
@@ -14,7 +19,7 @@ def catalog_missing_keys(rtn_flpth):
     # get keys defined on file
     for line in rtn_f:
         if line.startswith('>'):
-            field_name = line.split('>')[1].replace(' ','').replace('\n','')
+            field_name = line.split('>')[1].replace(' ', '').replace('\n', '')
             keys_at_file.append(field_name)
     # check missing keys
     missing_keys = []
@@ -22,6 +27,7 @@ def catalog_missing_keys(rtn_flpth):
         if req_key not in keys_at_file:
             missing_keys.append(req_key)
     return missing_keys
+
 
 def load_rtn_data(rtn_path):
     '''
@@ -39,7 +45,7 @@ def load_rtn_data(rtn_path):
 
     # --- sanity check ---------------------------------------------------------
     # check if required keys are present at rtn file
-    missing_keys= catalog_missing_keys(rtn_path)
+    missing_keys = catalog_missing_keys(rtn_path)
     try:
         assert(len(missing_keys) == 0)
     except(AssertionError):
@@ -60,20 +66,21 @@ def load_rtn_data(rtn_path):
 
         # check if new section creation
         if line.startswith('>'):
-            curr_field_name = line.split('>')[1].replace(' ','').replace('\n','')
+            curr_field_name = line.split('>')[1].replace(
+                ' ', '').replace('\n', '')
             dct[curr_field_name] = {}
             continue
 
         # handle 'key = value' format
         if curr_field_name in equal_fmt_fields:
             ln_data = line.split('=')
-            key = ln_data[0].replace(' ','')
-            value = ln_data[1].replace(' ','').replace('\n','')
+            key = ln_data[0].replace(' ', '')
+            value = ln_data[1].replace(' ', '').replace('\n', '')
             dct[curr_field_name][key] = value
             continue
 
         # handle input names format (key :: value)
-        if curr_field_name in  ['input_names']:
+        if curr_field_name in ['input_names']:
             # handle args order line
             if line.startswith('<'):
                 args_lst = []
@@ -81,7 +88,8 @@ def load_rtn_data(rtn_path):
                 for arg_prvd in ln_data:
                     if arg_prvd == '':
                         continue
-                    arg_nm = arg_prvd.replace('>','').replace(' ','').replace('\n','')
+                    arg_nm = arg_prvd.replace('>', '').replace(
+                        ' ', '').replace('\n', '')
                     # be sure the arguments provided were previously defined
                     try:
                         assert(arg_nm in dct[curr_field_name].keys())
@@ -94,15 +102,16 @@ def load_rtn_data(rtn_path):
                 dct[curr_field_name]['order_of_args'] = args_lst
                 continue
             ln_data = line.split('::')
-            key = ln_data[0].replace(' ','')
-            value = ln_data[1].replace(' ','').replace('\n','')
+            key = ln_data[0].replace(' ', '')
+            value = ln_data[1].replace(' ', '').replace('\n', '')
             dct[curr_field_name][key] = value
             continue
 
     return dct
 
-def get_args_command_line(routine, sample, reference_genome, num_threads,
-                        min_len, adapters_file):
+
+def get_args_command_line(routine, sample, reference_genome, depth, num_threads,
+                          min_len, adapters_file):
     '''
     Get arguments values of a given pair of routine and sample according to
     the order set at routine config file ('.rtn').
@@ -122,7 +131,7 @@ def get_args_command_line(routine, sample, reference_genome, num_threads,
         if key == 'source_dir':
             value = sample.source_dir
         # check if sample read files paths
-        if key in ['R1_read','R2_read']:
+        if key in ['R1_read', 'R2_read']:
             if key.startswith('R1'):
                 value = sample.R1_read
             if key.startswith('R2'):
@@ -131,7 +140,7 @@ def get_args_command_line(routine, sample, reference_genome, num_threads,
         if key == 'reference_genome':
             value = reference_genome
         if key == 'sample_code':
-            value = sample_a.code
+            value = sample.code
         if key == 'num_threads':
             value = num_threads
         if key == 'depth':
@@ -145,9 +154,94 @@ def get_args_command_line(routine, sample, reference_genome, num_threads,
 
     return cmd_lst
 
-# queue files
+# --- SAMPLE PREPARATION -------------------------------------------------------
 
-def write_subfl(template_flpth, new_flpath, bash_line):
+
+def get_fastq_metadata(fastq_file):
+    '''
+    process fastq naming metadata
+    '''
+    # get list of fastq submitted
+    fastq_mtdata = fastq_file.split('.')[0].split('_')
+    sample_code = fastq_mtdata[0]
+    plate_pos = fastq_mtdata[1]
+    # something = fastq_mtdata[2]
+    sense = fastq_mtdata[3].capitalize()
+    try:
+        assert(sense in ['R1', 'R2'])
+    except(AssertionError):
+        raise Exception("Invalid sense naming. Sense must be 'R1' or 'R2'")
+
+    # number = fastq_mtdata[4]
+
+    dct = {'sample_code': sample_code, 'plate_pos': plate_pos,
+           sense+'_read': fastq_file}
+    return dct
+
+
+def get_samples_dct(data_dir):
+    '''
+    given a list fastq files, process filenames and create dictionaries containg
+    samples file data.
+
+    Parameters
+    ----------
+    data_dir : path
+        path of sequence batch data files
+
+    Returns
+    -------
+    A list of dictionaries containing samples data
+    '''
+    # santy check --------------------------------------------------------------
+    # be sure the input is a valid directory
+    assert(Path(data_dir).is_dir()), data_dir+' is not a dir'
+    # --------------------------------------------------------------------------
+    # get fastq files list
+    files_at_dir = os.listdir(data_dir)
+    fastq_lst = [x for x in files_at_dir if x.endswith('fastq.gz')]
+
+    # for each pairs of fastq, create a dictionary containing samples data
+    samples_dct_lst = []
+    sample_codes_lst = []
+
+    for fastq in fastq_lst:
+        # get metadata
+        sample_dct = get_fastq_metadata(fastq)
+        # add source dir
+        sample_dct['source_dir'] = data_dir
+        scode = sample_dct['sample_code']
+        # get sense of current fastq
+        sense = [x for x in list(sample_dct.keys())
+                 if x.startswith('R1') or x.startswith('R2')]
+        assert(len(sense) == 1), 'more then one key starting with R1 or R2'
+        sense = sense[0]
+        # avoid process files of same sample more then once
+        if scode not in sample_codes_lst:
+            sample_codes_lst.append(scode)
+            # get pair name
+            if sense.startswith('R1'):
+                comp_sense = 'R2'
+            if sense.startswith('R2'):
+                comp_sense = 'R1'
+            fastq_mtdata = fastq.split('.')[0].split('_')
+            fastq_mtdata[3] = comp_sense
+            comp_filename = '_'.join(fastq_mtdata)+'.fastq.gz'
+            # sanity check -----------------------------------------------------
+            # be sure the pair file exist
+            assert(Path(data_dir+comp_filename).is_file())
+            # ------------------------------------------------------------------
+            # store complementary sense filename
+            sample_dct[comp_sense+'_read'] = comp_filename
+            samples_dct_lst.append(sample_dct)
+            continue
+    return samples_dct_lst
+
+# --- QUEUE SUBMITION ----------------------------------------------------------
+
+
+def write_subfl(template_flpth, new_flpath, job_name, bash_line, nodes=1,
+                num_threads=8):
     '''
     write a new queue submition file for a sample processing based on a template
     provided.
@@ -163,17 +257,32 @@ def write_subfl(template_flpth, new_flpath, bash_line):
 
     # Copy lines from template file and add specific command line to new
     # submition file
-    with open(template_flpth,'r') as temp:
+    with open(template_flpth, 'r') as temp:
         new_fl = open(new_flpath, 'w')
         for line in temp:
-            new_fl.write(line)
+            # add job name
+            if line.startswith('#PBS -N '):
+                new_fl.write('#PBS -N '+job_name+'\n')
+                continue
+            if line.startswith('#PBS -l '):
+                new_line = '#PBS -l nodes=' + \
+                    str(nodes)+':ppn='+str(num_threads)+"#shared"
+                new_fl.write(new_line)
+                continue
+            # add bash line
             if line.startswith('#>add_bash_here<'):
                 new_fl.write(bash_line+'\n')
+                continue
+            # copy everything else
+            else:
+                new_fl.write(line)
+
 
 class sample:
     '''
     class to handle individual sample information
     '''
+
     def __init__(self, sample_code, plate_pos, R1_read, R2_read, source_dir):
         '''
 
@@ -192,22 +301,12 @@ class sample:
         #         for params and outputs
         pass
 
-    def submit_to_queue(self, routine_obj, engine='pbs'):
-        '''
-        submit
-        '''
-        # [TO DO] sanity checks
-        # [TO DO] get bash line to add
-        # [TO DO] write submition file
-        write_subfl(template_flpth,new_flpath,bash_line)
-        # [TO DO] submit to queue according to engine
-        pass
-
 
 class gnmAssembly:
     '''
     class to handle routine genome assembly workflow
     '''
+
     def __init__(self, rtn_path):
         '''
         create a routine for genome assembly handling.
@@ -224,19 +323,8 @@ class gnmAssembly:
         self.routine_name = self.metadata['routine_name']
         self.bash_path = self.paths['bash_path']
 
-    def submit_to_queue(self, sample_dct, engine='pbs'):
-        '''
-        '''
-        #[TO DO]
-        # for each fastq, do:
-            # create output directory
-            # create submition file
-            # get bash line and add to submition file
-
-        pass
-
     def run(self, sample_obj, reference_genome, adapters_file, num_threads,
-            min_len, depth, source_dir, local=True):
+            min_len, depth, source_dir):
         '''
         Run genome assembly routine.
 
@@ -281,14 +369,14 @@ class gnmAssembly:
             None
             '''
             # create parameters directory
-            mkdir_cmd = "mkdir "+ source_dir+'/params/'
-            process = subprocess.run(mkdir_cmd, shell=True,check=True)
+            mkdir_cmd = "mkdir " + source_dir+'/params/'
+            process = subprocess.run(mkdir_cmd, shell=True, check=True)
             # copy reference genome file
-            copy_ref_cmd = "cp "+ reference_genome +' '+ source_dir+'/params/'
-            process = subprocess.run(copy_ref_cmd, shell=True,check=True)
+            copy_ref_cmd = "cp " + reference_genome + ' ' + source_dir+'/params/'
+            process = subprocess.run(copy_ref_cmd, shell=True, check=True)
             # copy adapaters file
-            copy_adp_cmd = "cp "+ adapters_file +' '+ source_dir+'/params/'
-            process = subprocess.run(copy_adp_cmd, shell=True,check=True)
+            copy_adp_cmd = "cp " + adapters_file + ' ' + source_dir+'/params/'
+            process = subprocess.run(copy_adp_cmd, shell=True, check=True)
 
             return None
 
@@ -299,43 +387,80 @@ class gnmAssembly:
         ref_gnm = reference_genome.split('/')[-1]
         adpt_fln = adapters_file.split('/')[-1]
 
-        cmd_lst = get_args_command_line(self, sample_a, ref_gnm,
-                                    num_threads, min_len, adpt_fln)
+        cmd_lst = get_args_command_line(self, sample_obj, 'params/'+ref_gnm,
+                                        depth, num_threads, min_len,
+                                        'params/'+adpt_fln)
         # run locally
-        if local == True:
-            # run bash command
-            process = subprocess.run(' '.join(cmd_lst), shell=True,check=True)
-            # [TO DO] check output files
-            # [TO DO] move output files
-        # [TO DO]
-        #if queue == True:
-        # PBS
-        # get template for PBS
-        # monitor output files generation and create a log/report
-        # Slurm
+        # run bash command
+        process = subprocess.run(' '.join(cmd_lst), shell=True, check=True)
+        # [TO DO] check output files
+        # [TO DO] move output files
+
+    def submit_to_queue(self, sample_obj, ref_gnm, adpt_fln, template_flpth,
+                        num_threads=8, min_len=75, depth=5, nodes=1):
+        '''
+        submit routine analyses
+        '''
+        # [TO DO] sanity checks
+
+        # get bash line to add
+        cmd_lst = get_args_command_line(self, sample_obj, ref_gnm, depth,
+                                        num_threads, min_len, adpt_fln)
+        bash_line = ' '.join(cmd_lst)
+
+        # write submition file
+        job_name = sample_obj.code
+        new_flpath = sample_obj.source_dir+'/'+job_name+'_job.sh'
+        write_subfl(template_flpth, new_flpath, job_name, bash_line,
+                    nodes=nodes, num_threads=num_threads)
+        # submit to queue
+        sample_obj.jobSbmPath = new_flpath
+        # submit to queue according to engine
+        print('qsub '+new_flpath)
+        #subprocess.run('qsub '+new_flpath, shell=True, check=True)
+        # [TO DO] monitor output files
 
 
 class seqBatch:
     '''
+    [TO DO] add description
     '''
-    def __init__(self, run_code, gprvdr_code, full_path, reads_lenght,
-                submition_date):
+
+    def __init__(self, run_code, gprvdr_code, dir_path, reads_lenght,
+                 submition_date):
+        '''
+        [TO DO] add description
+        '''
         self.run_code = run_code
         self.gprvdr_code = gprvdr_code
-        self.full_path = full_path
+        self.dir_path = dir_path
         self.reads_lenght = reads_lenght
-        self.submition_date =submition_date
+        self.submition_date = submition_date
         # get list of sample code and fastq pairs
-        files_dir = os.listdir('/'.join(event.src_path.split('/')[0:-1]))
-        fastq_lst = [x for x in files_dir if x.endswith('fastq.gz')]
-        # dct = {sample_code: 'xxx', fastq_files:'xxx'}
+        # load sample data
+        sample_dct_lst = get_samples_dct(self.dir_path)
+        self.samples_obj_lst = []
+        for dct in sample_dct_lst:
+            sample_i = sample(**dct)
+            self.samples_obj_lst.append(sample_i)
+        # store codes for easy access
+        self.sample_codes = [x.code for x in samples_obj_lst]
 
-    def call_gnm_assembly_routine(self, routine_dct):
-        # call
-        # load files from parameters and prepare submition files
-
+    def do_samples_GnmAssembly(self, routine_obj, reference_genome,
+                               adapter_file, pbs_flpath, num_threads=8,
+                               min_len=75, depth=5, nodes=1, queue=True,
+                               local=False):
+        '''
+        [TO DO] add description
+        '''
         # submit all sequences to queue
+        for s_i in self.samples_obj_lst:
+            if queue == True:
+                s_i.submit_to_queue(routine, reference_genome, adapter_file, pbs_flpath,
+                                    num_threads=num_threads, min_len=min_len,
+                                    depth=depth, nodes=1)
         pass
+
 
 # test
 rtn_path = "/HDD/Projects/git_stuff/RGFbackend/test_dir/routines/iam_sarscov2.rtn"

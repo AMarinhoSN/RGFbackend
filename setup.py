@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(name='RGFbackend',
-    version='0.0.1',
+    version='0.0.5',
     description='''
     A python package designed to handle backend routine of Rede Genomica Fiocruz
     ''',
     url='http://github.com/AMarinhoSN/RGFbackend',
     author='Antonio Marinho da Silva Neto',
     author_email='antonio.marinho@fiocruz.br',
-    packages=['dbInterface', 'watchers'],
+    packages=['dbInterface', 'watchers', 'movingParts'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3.8',

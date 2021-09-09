@@ -1,4 +1,6 @@
 #!/bin/bash
+## Job name
+#PBS -N <job_name>
 
 # Redirect output stream to this file.
 #PBS -o pbs_out.dat
