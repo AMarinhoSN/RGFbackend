@@ -416,8 +416,7 @@ class gnmAssembly:
         # submit to queue
         sample_obj.jobSbmPath = new_flpath
         # submit to queue according to engine
-        print('qsub '+new_flpath)
-        #subprocess.run('qsub '+new_flpath, shell=True, check=True)
+        subprocess.run('qsub '+new_flpath, shell=True, check=True)
         # [TO DO] monitor output files
 
 
