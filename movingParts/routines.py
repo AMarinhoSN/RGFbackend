@@ -240,8 +240,8 @@ def get_samples_dct(data_dir):
 # --- QUEUE SUBMITION ----------------------------------------------------------
 
 
-def write_subfl(template_flpth, new_flpath, job_name, bash_line, nodes=1,
-                num_threads=8):
+def write_subfl(template_flpth, new_flpath, job_name, bash_line,
+                out_dir, prefix, num_threads=8, nodes=1):
     '''
     write a new queue submition file for a sample processing based on a template
     provided.
@@ -253,7 +253,11 @@ def write_subfl(template_flpth, new_flpath, job_name, bash_line, nodes=1,
     template_flpth:<path>
         file path of a template file
     '''
+
     # [TO DO] Sanity checks
+
+    if out_dir.endswith('/') is False:
+        out_dir = out_dir+'/'
 
     # Copy lines from template file and add specific command line to new
     # submition file
@@ -264,11 +268,23 @@ def write_subfl(template_flpth, new_flpath, job_name, bash_line, nodes=1,
             if line.startswith('#PBS -N '):
                 new_fl.write('#PBS -N '+job_name+'\n')
                 continue
+            # add threads and nodes
             if line.startswith('#PBS -l '):
                 new_line = '#PBS -l nodes=' + \
                     str(nodes)+':ppn='+str(num_threads)+"#shared"
                 new_fl.write(new_line)
                 continue
+            # add output files
+            if line.startswith('#PBS -o '):
+                new_line = '#PBS -o ' + out_dir+prefix+'_pbs_out.dat'
+                new_fl.write(new_line)
+                continue
+
+            if line.startswith('#PBS -e '):
+                new_line = '#PBS -e ' + out_dir+prefix+'_pbs_err.dat'
+                new_fl.write(new_line)
+                continue
+
             # add bash line
             if line.startswith('#>add_bash_here<'):
                 new_fl.write(bash_line+'\n')
@@ -276,6 +292,7 @@ def write_subfl(template_flpth, new_flpath, job_name, bash_line, nodes=1,
             # copy everything else
             else:
                 new_fl.write(line)
+
 
 
 class sample:
@@ -381,7 +398,7 @@ class gnmAssembly:
             return None
 
         # copy parameters files to source dir
-        __prep_directory()
+        #__prep_directory()
         # get bash line
         # get only file names
         ref_gnm = reference_genome.split('/')[-1]
@@ -412,7 +429,8 @@ class gnmAssembly:
         job_name = sample_obj.code
         new_flpath = sample_obj.source_dir+'/'+job_name+'_job.sh'
         write_subfl(template_flpth, new_flpath, job_name, bash_line,
-                    nodes=nodes, num_threads=num_threads)
+                    sample_obj.source_dir, job_name, nodes=nodes, 
+                    num_threads=num_threads)
         # submit to queue
         sample_obj.jobSbmPath = new_flpath
         # submit to queue according to engine
@@ -462,8 +480,8 @@ class seqBatch:
 
 
 # test
-rtn_path = "/HDD/Projects/git_stuff/RGFbackend/test_dir/routines/iam_sarscov2.rtn"
-rtn_dct = load_rtn_data(rtn_path)
+#rtn_path = "/HDD/Projects/git_stuff/RGFbackend/test_dir/routines/iam_sarscov2.rtn"
+#rtn_dct = load_rtn_data(rtn_path)
 
 # TODO : create routine class
 #        this class will provide methods to:
