@@ -443,15 +443,13 @@ class seqBatch:
     [TO DO] add description
     '''
 
-    def __init__(self, run_code, gprvdr_code, dir_path, reads_lenght,
-                 submition_date):
+    def __init__(self, run_code, gprvdr_code, dir_path, submition_date):
         '''
         [TO DO] add description
         '''
         self.run_code = run_code
         self.gprvdr_code = gprvdr_code
         self.dir_path = dir_path
-        self.reads_lenght = reads_lenght
         self.submition_date = submition_date
         # get list of sample code and fastq pairs
         # load sample data
@@ -461,7 +459,7 @@ class seqBatch:
             sample_i = sample(**dct)
             self.samples_obj_lst.append(sample_i)
         # store codes for easy access
-        self.sample_codes = [x.code for x in samples_obj_lst]
+        self.sample_codes = [x.code for x in self.samples_obj_lst]
 
     def do_samples_GnmAssembly(self, routine_obj, reference_genome,
                                adapter_file, pbs_flpath, num_threads=8,
@@ -470,16 +468,20 @@ class seqBatch:
         '''
         [TO DO] add description
         '''
+        assert(queue != local), 'either local or queue must be True'
         # submit all sequences to queue
         for s_i in self.samples_obj_lst:
-            if queue == True:
-                s_i.submit_to_queue(routine, reference_genome, adapter_file, pbs_flpath,
-                                    num_threads=num_threads, min_len=min_len,
-                                    depth=depth, nodes=1)
+            if queue is True:
+                routine_obj.submit_to_queue(s_i, reference_genome, adapter_file,
+                                    pbs_flpath, num_threads=num_threads,
+                                    min_len=min_len, depth=depth, nodes=1)
+            if local is True:
+                routine_obj.run(self, reference_genome, adapter_file,
+                                num_threads, min_len, depth, self.source_dir)
         pass
 
 
-# test
+#test
 #rtn_path = "/HDD/Projects/git_stuff/RGFbackend/test_dir/routines/iam_sarscov2.rtn"
 #rtn_dct = load_rtn_data(rtn_path)
 
