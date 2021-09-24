@@ -138,8 +138,8 @@ class Handler(PatternMatchingEventHandler):
         # credential file
         self.cred_flpath = cred_flpath
         self.database_name = database_name
-	# parameters directory
-	self.params_dir = params_dir
+    # parameters directory
+    self.params_dir = params_dir
 
     def on_created(self, event):
         # Event is created
@@ -215,7 +215,6 @@ class Handler(PatternMatchingEventHandler):
         print("  > Adding new sequencing batch document")
         DBclient.insert_new_seqBatch(run_dct)
 
-
     def on_modified(self, event):
         print("Watchdog received modified event - % s." % event.src_path)
         # Event is modified, you can process it now
@@ -233,7 +232,7 @@ class subm_watcher:
         self.cred_flpath = cred_flpath
         self.dir_path = src_path
         self.db_name = db_name
-	self.params_dir = params_dir
+        self.params_dir = params_dir
 
     def activate(self):
         '''

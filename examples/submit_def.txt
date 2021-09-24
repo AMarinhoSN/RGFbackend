@@ -1,0 +1,6 @@
+b_routine=iam_sarscov2
+b_num_threads = 1
+depth = 5
+min_len = 75
+reference_genome = /path/to/reference_genome.fasta
+adapters_file = /path/to/adapaters.fasta
