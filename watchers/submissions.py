@@ -4,10 +4,11 @@ import time
 import os
 from datetime import datetime
 import sys
+import pickle as pck
 # database interface
 import dbInterface.mongoInterface
 # routines classes
-import movingParts
+import movingParts.routines
 # === FUNCTIONS ================================================================
 
 
@@ -138,14 +139,16 @@ class Handler(PatternMatchingEventHandler):
         # credential file
         self.cred_flpath = cred_flpath
         self.database_name = database_name
-    # parameters directory
-    self.params_dir = params_dir
+        # parameters directory
+        self.params_dir = params_dir
 
     def on_created(self, event):
         # Event is created
         print("Watchdog received created event - % s." % event.src_path)
         # create log file
-        log_fl = open(event.src_path+'/submition.log', 'a')
+        path_lst = event.src_path.split('/')
+        src_dir = '/'.join(path_lst[0:len(path_lst)-1])+'/'
+        log_fl = open(src_dir+'/submition.log', 'a')
         # write submition detected date on log
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -155,14 +158,14 @@ class Handler(PatternMatchingEventHandler):
         # --- LOAD METADATA CONTENT -------------------------------------------
         log_fl.write('@ loading metadata from paths...\n')
         # get run code and genome provider code
-        metadata_dct = get_metadata_from_path(event.src_path)
+        metadata_dct = get_metadata_from_path(src_dir)
 
         # update log file
         log_fl.write(' > run_code = '+metadata_dct['run_code']+'\n')
         log_fl.write(' > gprvdr_code = '+metadata_dct['gprvdr_code']+'\n')
 
         # get list of files on the submit file dir
-        files_dir = os.listdir('/'.join(event.src_path.split('/')[0:-1]))
+        files_dir = os.listdir(src_dir) #'/'.join(event.src_path.split('/')[0:-1]))
         fastq_lst = [x for x in files_dir if x.endswith('fastq.gz')]
 
         # get metadata from file name
@@ -175,7 +178,7 @@ class Handler(PatternMatchingEventHandler):
         # submit_dct = process_submit_fl(event.src_path)
 
         submit_dct = get_run_parameters(
-                            event.src_path+'submit.txt',
+                            src_dir+'submit.txt',
                             self.params_dir+'submit_def.txt',
                             event.src_path+'submition.log')
 
@@ -192,7 +195,8 @@ class Handler(PatternMatchingEventHandler):
         run_dct = {**metadata_dct, **submit_dct}
         run_dct['files_at_dir'] = files_dir
         run_dct['fastq_at_dir'] = fastq_lst
-        log_fl.write('> '+str(len(fastq_lst)), ' total fastq files detected')
+        log_fl.write('> '+str(len(fastq_lst))+' total fastq files detected\n')
+        pck.dump(run_dct, open(src_dir+'/'+run_dct['run_code']+'_dct.pck','bw'))
         # --- START ANALISES ROUTINE -------------------------------------------
         #
         # create sequence batch object
@@ -202,18 +206,25 @@ class Handler(PatternMatchingEventHandler):
             dir_path=metadata_dct['full_path'],
             submition_date=dt_string)
         # [to do] create routine object and check arguments complaince
-        # [to do] submit jobs
-        # [TODO] status notification system
+        rtn_path = run_dct['routine']
+        routine_obj = movingParts.routines.gnmAssembly(rtn_path)
 
+        # [TODO] submit to queue
+        seqbatch_obj.do_samples_GnmAssembly(
+            routine_obj, run_dct['reference_genome'],
+            run_dct['adapters_file'], run_dct['pbs_flpath'], queue=True)
+
+        # [TODO] status notification system
         # --- FEED MONGO DB ----------------------------------------------------
         # connect to database
         # TODO - handle failed connection
-        DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
-                                                       database_name=self.database_name)
+        # WARNING NO FEED FOR NOW
+	#DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
+        #                                               database_name=self.database_name)
 
         # feed run collection
-        print("  > Adding new sequencing batch document")
-        DBclient.insert_new_seqBatch(run_dct)
+        #print("  > Adding new sequencing batch document")
+        #DBclient.insert_new_seqBatch(run_dct)
 
     def on_modified(self, event):
         print("Watchdog received modified event - % s." % event.src_path)

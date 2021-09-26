@@ -60,6 +60,9 @@ parser.add_argument('cred_flpath', type=str,
 parser.add_argument('db_name', type=str,
                     help='database name to be used')
 
+parser.add_argument('params_dir', type=str,
+                    help='path to directory containing GSE standard parameters') 
+
 args = parser.parse_args()
 
 
@@ -94,12 +97,12 @@ print('| --------------------------------------------------------------------|')
 cred_flpath = args.cred_flpath
 src_path = args.dir_path
 dbName = args.db_name
-
+params_dir = args.params_dir
 assert(os.path.isdir(src_path)), 'path provided is not a directory'
 
 print("@ starting subwatcher")
 # start watcher
-watcher = subm_watcher(cred_flpath, src_path, dbName)
+watcher = subm_watcher(cred_flpath, src_path, dbName, params_dir)
 watcher.activate()
 print("   > running...")
 try:
