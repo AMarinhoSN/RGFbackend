@@ -155,6 +155,8 @@ class Handler(PatternMatchingEventHandler):
         log_fl.write(
             '! sequence batch submition request detected at '+dt_string+'\n'
             )
+        # TODO: check for all required input data (metadados, primers) before
+        #       start the processing
         # --- LOAD METADATA CONTENT -------------------------------------------
         log_fl.write('@ loading metadata from paths...\n')
         # get run code and genome provider code
@@ -165,51 +167,46 @@ class Handler(PatternMatchingEventHandler):
         log_fl.write(' > gprvdr_code = '+metadata_dct['gprvdr_code']+'\n')
 
         # get list of files on the submit file dir
-        files_dir = os.listdir(src_dir) #'/'.join(event.src_path.split('/')[0:-1]))
+        files_dir = os.listdir(src_dir)
         fastq_lst = [x for x in files_dir if x.endswith('fastq.gz')]
 
         # get metadata from file name
         samples_lst = []
         for f in fastq_lst:
             samples_lst.append(get_fastq_metadata(f))
+        # --- SAMPLES METADATA PROCESSING -------------------------------------
+        # TODO: load metadata, verify compliance to minimal and recomended
+        #
         # --- GET ROUTINE PARAMATERS ------------------------------------------
-        # get parameters from submit txt
+        # get parameters from submit txt, if not specified, use default params
         log_fl.write('@ parsing submit.txt from paths...\n')
-        # submit_dct = process_submit_fl(event.src_path)
-
         submit_dct = get_run_parameters(
                             src_dir+'submit.txt',
                             self.params_dir+'submit_def.txt',
                             event.src_path+'submition.log')
-
-        # get default parameters
-
-        # get parameters [check for default routine values]
-        # ----------------------------------------------------------------------
-        # WARNING TEMPORARY SOLUTION
-        # the default values will be hardset here just for convenience
-        # Those keys and values should be
-        # ----------------------------------------------------------------------
+        # TODO: check for provided arguments compliance to routine
 
         # mount documents
         run_dct = {**metadata_dct, **submit_dct}
         run_dct['files_at_dir'] = files_dir
         run_dct['fastq_at_dir'] = fastq_lst
         log_fl.write('> '+str(len(fastq_lst))+' total fastq files detected\n')
-        pck.dump(run_dct, open(src_dir+'/'+run_dct['run_code']+'_dct.pck','bw'))
-        # --- START ANALISES ROUTINE -------------------------------------------
-        #
+        # store document content as a pickle file
+        pck.dump(run_dct, open(
+            src_dir+'/'+run_dct['run_code']+'_dct.pck', 'bw'))
+        # --- START ANALISES ROUTINE ------------------------------------------
         # create sequence batch object
         seqbatch_obj = movingParts.routines.seqBatch(
             run_code=metadata_dct['run_code'],
             gprvdr_code=metadata_dct['gprvdr_code'],
             dir_path=metadata_dct['full_path'],
             submition_date=dt_string)
-        # [to do] create routine object and check arguments complaince
+        # create routine object
         rtn_path = run_dct['routine']
         routine_obj = movingParts.routines.gnmAssembly(rtn_path)
+        # [TODO] check arguments complaince
 
-        # [TODO] submit to queue
+        # submit to queue
         seqbatch_obj.do_samples_GnmAssembly(
             routine_obj, run_dct['reference_genome'],
             run_dct['adapters_file'], run_dct['pbs_flpath'], queue=True)
@@ -219,8 +216,8 @@ class Handler(PatternMatchingEventHandler):
         # connect to database
         # TODO - handle failed connection
         # WARNING NO FEED FOR NOW
-	#DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
-        #                                               database_name=self.database_name)
+        # DBclient = dbInterface.mongoInterface.DataBase(self.cred_flpath,
+        #                                      database_name=self.database_name)
 
         # feed run collection
         #print("  > Adding new sequencing batch document")
@@ -250,7 +247,8 @@ class subm_watcher:
         activate submissions watcher
         '''
         # create event handler
-        event_handler = Handler(self.cred_flpath, self.db_name, self.params_dir)
+        event_handler = Handler(
+            self.cred_flpath, self.db_name, self.params_dir)
         # create observer and add event handler routines
         self.observer = watchdog.observers.Observer()
         self.observer.schedule(event_handler, path=self.dir_path,
