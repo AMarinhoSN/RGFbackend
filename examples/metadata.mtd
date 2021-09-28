@@ -26,8 +26,10 @@
 ++ names : CPF,CNS,Nome_mae,inusitada,Codigo_amostra,Gal_lacen,Status_paciente,Idade,Primers
 ++ types : str,str,str,bool,str,str,str,int,str
 
+# Set date time format, the string defined here is passed to a python datetime
+# object.
 > date_time_standard
-== format : %d/%m/%Y
+== format : %d/%m/%Y %H:%M:%S
 
 # other columns not mentioned here can be added to the samples documents, but
 # no format or naming standard will be enforced.

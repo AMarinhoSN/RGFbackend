@@ -1,5 +1,7 @@
-
+import datetime
 # --- FUNCTIONS ---------------------------------------------------------------
+
+
 def load_gprm_format(file_path):
     '''
     load the gse parameters standard formating
@@ -27,8 +29,9 @@ def load_gprm_format(file_path):
         # if value ('==')
         if ln.startswith('=='):
             l_data = l_preprc.split(':')
-            subK_nm = l_data[0].replace('++', '')
-            subV_nm = l_data[1].split(',')
+            subK_nm = l_data[0].replace('==', '')
+            subV_nm = l_data[1].split(',')[0]
+            mtdt_def[key_nm][subK_nm] = subV_nm
             continue
     return mtdt_def
 
@@ -94,6 +97,18 @@ def check_columns_compliance(colsNames_lst, typeNames_lst):
     return True
 
 
+def check_date_frmt(string_dt):
+    accptd_date_frmt = ['d', 'm', 'Y', 'H', 'M', 'S']
+    print(string_dt)
+    for i, char in enumerate(string_dt):
+        if char == '%':
+            if string_dt[i+1] not in accptd_date_frmt:
+                msg = '%'+string_dt[i+1]+' is an invalid symbol for datetime'
+                return msg
+            continue
+    return True
+
+
 def check_mtdata_def_compliance(mtd_flpath):
     '''
     Check if a given sample metadata definition file obey the format
@@ -123,7 +138,12 @@ def check_mtdata_def_compliance(mtd_flpath):
                                      mtdt_def['recommended']['types'])
     if msg_3 is not True:
         return msg_3
-    # TODO: check date and time compliance
+    # check date and time compliance
+    string_dt = mtdt_def['date_time_standard']['format']
+    print(mtdt_def)
+    msg_4 = check_date_frmt(string_dt)
+    if msg_4 is not True:
+        return msg_4
     # everuthing is okay
     return True
 
