@@ -1,0 +1,33 @@
+# --- SAMPLE METADATA PARAMETERS ----------------------------------------------
+# this file sets the column names that must be available at metadata .csv file
+# provided at sequence batch submition.
+# two categories must be defined:
+#     1) the essential columns: columns that must be present to submition to
+#                               be completed
+#     2) the recommended columns: columns that are recommended for posterior
+#                               data analyses, but can be missing
+# format of mtd
+# > category of columns [essential, recomended and date_time_standard]
+# ++ names : [list names of the columns]
+# ++ types : [list types expected for each column]
+#            'str'     for string
+#            'int'     for integer
+#            'date'    for date
+#            'bool'    for Boolean
+# PS: a preferential date time standard must be set.
+
+# set absolute necessary columns
+> essential
+++ names : UF,Municipio,Nome_paciente,Data_de_coleta,Data_de_nascimento,Sexo
+++ types : str, str, str, date, date, str
+
+# set the nice to have columns
+> recommended
+++ names : CPF,CNS,Nome_mae,inusitada,Codigo_amostra,Gal_lacen,Status_paciente,Idade,Primers
+++ types : str,str,str,bool,str,str,str,int,str
+
+> date_time_standard
+== format : %d/%m/%Y
+
+# other columns not mentioned here can be added to the samples documents, but
+# no format or naming standard will be enforced.
