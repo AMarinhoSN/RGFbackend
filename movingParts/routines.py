@@ -17,12 +17,7 @@ def catalog_missing_keys(rtn_flpth):
     rtn_f = open(rtn_flpth, 'r')
     keys_at_file = []
     # get keys defined on file
-    skip_lines = ['\n', '', ' \n', ' ']
     for line in rtn_f:
-        if line in skip_lines:
-            continue
-        if line.startswith('#'):
-            continue
         if line.startswith('>'):
             field_name = line.split('>')[1].replace(' ', '').replace('\n', '')
             keys_at_file.append(field_name)

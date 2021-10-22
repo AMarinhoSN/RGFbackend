@@ -27,7 +27,13 @@ def process_submit_fl(flpath):
     # get keys and values on submit file
     # WARNING: key and values should not have spaces
     f = open(flpath, 'r')
+    skip_lines = ['\n', '', ' \n', ' ']
     for line in f:
+        if line in skip_lines:
+            continue
+        if line.startswith('#'):
+            continue
+
         try:
             ln_data = line.split('=')
             assert(len(ln_data) == 2)
