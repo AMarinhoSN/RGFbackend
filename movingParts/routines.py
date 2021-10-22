@@ -17,7 +17,12 @@ def catalog_missing_keys(rtn_flpth):
     rtn_f = open(rtn_flpth, 'r')
     keys_at_file = []
     # get keys defined on file
+    skip_lines = ['\n', '', ' \n', ' ']
     for line in rtn_f:
+        if line in skip_lines:
+            continue
+        if line.startswith('#'):
+            continue
         if line.startswith('>'):
             field_name = line.split('>')[1].replace(' ', '').replace('\n', '')
             keys_at_file.append(field_name)
@@ -111,7 +116,8 @@ def load_rtn_data(rtn_path):
 
 
 def get_args_command_line(routine, sample, reference_genome, depth, num_threads,
-                          min_len, adapters_file):
+                          min_len, adapters_file, dp_intrahost=100,
+                          trimm_len=0):
     '''
     Get arguments values of a given pair of routine and sample according to
     the order set at routine config file ('.rtn').
@@ -120,7 +126,8 @@ def get_args_command_line(routine, sample, reference_genome, depth, num_threads,
     ----------
     [TO DO] add description
     '''
-
+    # TODO: this needs to be rewritten to be routine agnostic!
+    #       for now this will get the job done
     cmd_lst = [routine.bash_path]
     for key in routine.input_names['order_of_args']:
         # get routine specific values
@@ -149,7 +156,8 @@ def get_args_command_line(routine, sample, reference_genome, depth, num_threads,
             value = min_len
         if key == 'adapters_file':
             value = adapters_file
-
+        if key == 'dp_intrahost':
+            value = dp_intrahost
         cmd_lst.append(str(value))
 
     return cmd_lst
@@ -294,7 +302,6 @@ def write_subfl(template_flpth, new_flpath, job_name, bash_line,
                 new_fl.write(line)
 
 
-
 class sample:
     '''
     class to handle individual sample information
@@ -429,7 +436,7 @@ class gnmAssembly:
         job_name = sample_obj.code
         new_flpath = sample_obj.source_dir+'/'+job_name+'_job.sh'
         write_subfl(template_flpth, new_flpath, job_name, bash_line,
-                    sample_obj.source_dir, job_name, nodes=nodes, 
+                    sample_obj.source_dir, job_name, nodes=nodes,
                     num_threads=num_threads)
         # submit to queue
         sample_obj.jobSbmPath = new_flpath
@@ -473,8 +480,8 @@ class seqBatch:
         for s_i in self.samples_obj_lst:
             if queue is True:
                 routine_obj.submit_to_queue(s_i, reference_genome, adapter_file,
-                                    pbs_flpath, num_threads=num_threads,
-                                    min_len=min_len, depth=depth, nodes=1)
+                                            pbs_flpath, num_threads=num_threads,
+                                            min_len=min_len, depth=depth, nodes=1)
             if local is True:
                 routine_obj.run(self, reference_genome, adapter_file,
                                 num_threads, min_len, depth, self.source_dir)
@@ -489,4 +496,5 @@ class seqBatch:
 #        this class will provide methods to:
 #       1 - generate submition files
 #       2 - submit to job queue
+#       3 - run locally
 #       3 - run locally
