@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+import argparse
+import movingParts.output
+import os
+
+dsc = """
+This script handle generic output operations common to the context of genomic
+surveillance.
+"""
+
+# ---- INPUT -------------------------------------------------------------------
+CWD = os.getcwd()  # current working dir
+parser = argparse.ArgumentParser(description=dsc)
+parser.add_argument(
+    "-compileFiles",
+    action="store_true",
+    help="compile files of subdirs on a single file",
+)
+parser.add_argument(
+    "--sourceDir",
+    type=str,
+    default=CWD,
+    help="path to dir containing individual sequencing runs data (default = current working dir)",
+)
+
+parser.add_argument(
+    "--fileName",
+    type=str,
+    help="Name of the file to be identified on sub dirs and compiled",
+)
+
+parser.add_argument(
+    "--outputName",
+    type=str,
+    help="Name of the output file",
+)
+
+
+args = parser.parse_args()
+
+print("| --------------------------------------------------------------------|")
+print("|                            >> RGF Output <<")
+print("|                             RGF backend v0.0")
+print("|                    made by Aggeu Magalhães Research Institute")
+print("|                             FIOCRUZ - Pernambuco")
+print("| --------------------------------------------------------------------|")
+print("| ")
+print("| This script handle simple and generic output files operations.")
+print("| Currently, compile single files on individual subdirs into a single ")
+print("| file.")
+print("| ")
+print("| --------------------------------------------------------------------|")
+print("| Written by:")
+print("|    PhD. Antonio Marinho da Silva Neto (antonio.marinho@fiocruz.br")
+print("| More information at: ")
+print("|    https://github.com/AMarinhoSN/RGFbackend")
+print("| --------------------------------------------------------------------|")
+# handle no mode set error
+if args.compileFiles is False:
+    s = "currently: -compileFiles"
+    print(f"ERROR : a mode must be set ({s}).")
+    exit(1)
+# print input parameter for selected mode(s)
+print("| Parameters")
+print("| ----------")
+if args.compileFiles is True:
+    print("|    compileFiles mode    |")
+    print("| --sourceDir    : ", args.sourceDir)
+    print("| --fileName     : ", args.fileName)
+    print("| --outputName   : ", args.outputName)
+    if args.fileName == None:
+        print("ERROR: --fileName must be provided")
+    if args.outputName == None:
+        print("ERROR: --outputName must be provided")
+    if (args.fileName == None) or (args.outputName == None):
+        exit(1)
+    # be sure appropriate file path
+    if args.sourceDir.endswith("/") is False:
+        args.sourceDir += "/"
+print("| --------------------------------------------------------------------|")
+
+# Run
+if args.compileFiles is True:
+    print("@ compiling files...")
+    movingParts.output.compileFiles(args.sourceDir, args.fileName, args.outputName)
+    print(f"  >> Compiled file at {args.sourceDir + args.outputName}")
+
+print("| --- DONE --- |")
