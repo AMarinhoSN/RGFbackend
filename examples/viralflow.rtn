@@ -1,0 +1,76 @@
+# ---- METADATA ----------------------------------------------------------------
+# set routine metadata. The only required key is 'routine_name', but keep in
+# mind everything you add here will be added on the document on a collection.
+# Add all the relevant information available for the routine analyses, this can
+# crucial for audit and debug purposes.
+# If you have more than one routine, is good practice to be sure all have the
+# same general information.
+
+> metadata
+kind = assembly_genome
+routine_name = viralflow
+git_link = https://github.com/dezordi/viralflow
+git_branch = restructure-singularity-container
+organism = SARS-CoV2
+
+#-------------------------------------------------------------------------------
+# ---- PATHS -------------------------------------------------------------------
+# set absolute paths that needed to be called
+
+> paths
+bash_path = /path/to/IAM_SARSCOV2/sars2_assembly_singularity_run.sh
+singularity_container_path = /path/to/routines/iam_sarscov2_container
+singularity_path = /usr/local/bin/singularity
+
+
+#-------------------------------------------------------------------------------
+# ---- INPUT NAMES --------------------------------------------------------------
+# set absolute paths that needed to be called by your bash script
+# required arguments must be defined by setting input key names and values types
+# types must be file_path, dir_path, str, int or float
+# format:
+#       <argument name> :: <type>
+
+> input_names
+source_dir :: dir_path
+reference_genome :: file_path
+R1_read :: file_path
+R2_read :: file_path
+sample_code :: str
+num_threads :: int
+depth :: int
+min_len :: int
+adapters_file :: file_path
+singularity_container_path :: file_path
+
+# set the order of arguments
+<source_dir> <reference_genome> <R1_read> <R2_read> <sample_code> <num_threads> <depth> <min_len> <adapters_file> <singularity_container_path>
+
+# set default values (not required for all arguments)
+# TODO : Check if default parameters set were created at input_names
+
+> default_params
+num_threads = 8
+depth = 5
+min_len = 75
+reference_genome = /path/to/reference_genome/NC_045512.2.fasta
+adapters_file = /path/to/adapters/COVISEQ_primers.fasta
+
+# list dependencies of the genome assembly routine added
+> dependencies
+BWA = 0.7.17-r1188
+samtools = 1.9
+htslib = 1.9
+fastp = 0.20.1
+iVar = 1.3.1
+bam-readcount = 0.8.0-unstable-7-625eea2
+Python = 3.8.1
+argparse = 1.4
+pandas = 1.0.1
+numpy = 1.20.3
+biopython = 1.74
+mafft = v7.310
+nextclade = 0.14.2
+pangolin = v3.1.4
+bedtools = v2.27.0
+bamdst = 1.0.6
