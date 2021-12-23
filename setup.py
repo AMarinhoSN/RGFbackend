@@ -22,6 +22,6 @@ setup(
         "scripts/RGF_sbmtWatcher",
         "scripts/RGF_output",
     ],
-    install_requires=["pymongo", "watchdog"],
+    install_requires=["pymongo", "watchdog", "gff3_parser", "numpy", "pandas"],
     zip_safe=False,
 )
